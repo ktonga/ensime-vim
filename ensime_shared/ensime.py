@@ -130,13 +130,14 @@ class Ensime(object):
             If used from a secondary thread, this may need to use threadsafe
             Vim calls where available -- see :meth:`Editor.raw_message`.
         """
-        for path in self.runtime_paths:
+        for path in self.runtime_paths():
             self._vim.command('set runtimepath-={}'.format(path))
 
-    @property
+    # Tried making this a @property, with and without memoization, and it made
+    # plugin initialization misbehave in Neovim (only). WTF.
     def runtime_paths(self):  # TODO: memoize
         """All the runtime paths of ensime-vim plugin files."""
-        runtimepath = self._vim.eval('&runtimepath')
+        runtimepath = self._vim.options['runtimepath']
         plugin = "ensime-vim"
         paths = []
 
