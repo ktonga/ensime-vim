@@ -1,4 +1,4 @@
-build:
+pipeline:
   quality:
     image: ensime/ensime:v1.x-cache
     pull: true
