@@ -7,6 +7,10 @@ function! ensime#client_status(config_path, create) abort
     return s:call_plugin('client_status', [a:config_path, a:create])
 endfunction
 
+function! ensime#restart() abort
+    return s:call_plugin('restart', [])
+endfunction
+
 function! ensime#current_client(create, quiet, allow_classpath_file_creation) abort
     return s:call_plugin('current_client', [a:create, a:quiet, a:allow_classpath_file_creation])
 endfunction

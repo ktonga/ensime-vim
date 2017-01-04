@@ -116,17 +116,19 @@ class EnsimeClient(TypecheckHandler, DebuggerClient, ProtocolHandler):
         self.connection_retries = 6
         self.connected = False
 
-        self.running = True
-
-        thread = Thread(name='queue-poller', target=self.queue_poll)
-        thread.daemon = True
-        thread.start()
+        self.start_polling()
 
         self.websocket_exists = module_exists("websocket")
         if not self.websocket_exists:
             self.tell_module_missing("websocket-client")
         if not module_exists("sexpdata"):
             self.tell_module_missing("sexpdata")
+
+    def start_polling(self):
+        self.running = True
+        thread = Thread(name='queue-poller', target=self.queue_poll)
+        thread.daemon = True
+        thread.start()
 
     def queue_poll(self, sleep_t=0.5):
         """Put new messages on the queue as they arrive. Blocking in a thread.
@@ -192,8 +194,8 @@ class EnsimeClient(TypecheckHandler, DebuggerClient, ProtocolHandler):
 
         if self.connected and not reconnect:
             return
-        if not self.running:
-            return
+        # if not self.running:
+        #     return
         if self.connection_retries < 1:
             self._display_ws_warning()
             return

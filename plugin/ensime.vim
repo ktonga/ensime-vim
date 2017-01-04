@@ -26,6 +26,7 @@ augroup ensime
     autocmd CursorMoved *.java,*.scala call ensime#au_cursor_moved(expand("<afile>"))
 augroup END
 
+command! -nargs=* -range EnRestart call ensime#restart([<f-args>], '')
 command! -nargs=* -range EnInstall call ensime#com_en_install([<f-args>], '')
 command! -nargs=* -range EnTypeCheck call ensime#com_en_type_check([<f-args>], '')
 command! -nargs=* -range EnType call ensime#com_en_type([<f-args>], '')

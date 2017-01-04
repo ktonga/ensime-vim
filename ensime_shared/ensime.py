@@ -84,6 +84,13 @@ class Ensime(object):
         for server in self.servers.values():
             server.stop()
 
+    def restart(self):
+        """Restarting servers..."""
+        self.teardown()
+        for client in self.clients.values():
+            client.start_polling()
+            self.watchdog_client_server_connection(client)
+
     def current_client(self):
         """Get the client for current file in the editor.
 
