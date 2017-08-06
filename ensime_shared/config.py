@@ -38,6 +38,7 @@ feedback = {
     "symbol_search_symbol_required": "Must provide symbols to search for!",
     "typechecking": "Typechecking...",
     "unknown_symbol": "Symbol not found",
+    "false_response": "Unable to process command",
 }
 
 

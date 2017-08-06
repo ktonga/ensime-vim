@@ -246,10 +246,25 @@ class EnsimeClient(TypecheckHandler, DebuggerClient, ProtocolHandler):
         shutil.rmtree(self.tmp_diff_folder, ignore_errors=True)
 
     def send_at_position(self, what, useSelection, where="range"):
+        """Ask the server to perform an operation on a range (sometimes named point)
+
+        `what` is used as the prefix for the typehint.
+
+        If `useSelection` is `False` the range is calculated based on the word under de
+        cursor. Current selection start and end is used as the range otherwise.
+
+        `where` defines the name of the property holding the range info within the request.
+        Default value is 'range' but 'point' is sometimes used
+        """
         self.log.debug('send_at_position: in')
         b, e = self.editor.selection_pos() if useSelection else self.editor.word_under_cursor_pos()
         self.log.debug('useSelection: {}, beg: {}, end: {}'.format(useSelection, b, e))
-        self.send_at_point_req(what, self.editor.path(), b[0], b[1], e[0], e[1], where)
+        beg = self.get_position(b[0], b[1])
+        end = self.get_position(e[0], e[1])
+        self.send_request(
+            {"typehint": what + "AtPointReq",
+             "file": self.editor.path(),
+             where: {"from": beg, "to": end}})
 
     # TODO: Should these be in Editor? They're translating to/from ENSIME's
     # coordinate scheme so it's debatable.
@@ -306,14 +321,13 @@ class EnsimeClient(TypecheckHandler, DebuggerClient, ProtocolHandler):
                            "fileInfo": self._file_info(),
                            "reload": False})
 
-    def send_at_point_req(self, what, path, brow, bcol, erow, ecol, where="range"):
-        """Ask the server to perform an operation at a given position."""
-        beg = self.get_position(brow, bcol)
-        end = self.get_position(erow, ecol)
+    def send_at_point(self, what, row, col):
+        """Ask the server to perform an operation at a given point."""
+        pos = self.get_position(row, col)
         self.send_request(
             {"typehint": what + "AtPointReq",
-             "file": path,
-             where: {"from": beg, "to": end}})
+             "file": self._file_info(),
+             "point": pos})
 
     def do_toggle_teardown(self, args, range=None):
         self.log.debug('do_toggle_teardown: in')
@@ -420,6 +434,15 @@ class EnsimeClient(TypecheckHandler, DebuggerClient, ProtocolHandler):
         """Request doc of whatever at cursor."""
         self.log.debug('doc_uri: in')
         self.send_at_position("DocUri", False, "point")
+
+    def usages(self):
+        """Request usages of whatever at cursor."""
+        row, col = self.editor.cursor()
+        self.log.debug('usages: in')
+        self.call_options[self.call_id] = {
+                "word_under_cursor": self.editor.current_word(),
+                "false_resp_msg": "Not a valid symbol under the cursor"}
+        self.send_at_point("UsesOfSymbol", row, col)
 
     def doc_browse(self, args, range=None):
         """Browse doc of whatever at cursor."""

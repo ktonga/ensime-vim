@@ -194,6 +194,12 @@ available.
     If [package] is given it must be a fully-qualified package name. If not,
     the package of the current source file is used.
 
+                                                                *:EnUsages*
+:EnUsages
+
+    Finds usages of the symbol under the cursor and loads them into the
+    quickfix window for easy navigation.
+
                                                     *ensime-debugger-commands*
 Debugger Commands~
 

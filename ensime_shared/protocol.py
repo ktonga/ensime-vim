@@ -1,6 +1,7 @@
 # coding: utf-8
 
 import webbrowser
+from operator import itemgetter
 
 from .config import feedback, gconfig
 from .symbol_format import completion_to_suggest
@@ -35,6 +36,7 @@ class ProtocolHandler(object):
         self.handlers["CompletionInfoList"] = self.handle_completion_info_list
         self.handlers["TypeInspectInfo"] = self.handle_type_inspect
         self.handlers["SymbolSearchResults"] = self.handle_symbol_search
+        self.handlers["SourcePositions"] = self.handle_source_positions
         self.handlers["DebugOutputEvent"] = self.handle_debug_output
         self.handlers["DebugBreakEvent"] = self.handle_debug_break
         self.handlers["DebugBacktrace"] = self.handle_debug_backtrace
@@ -42,6 +44,7 @@ class ProtocolHandler(object):
         self.handlers["RefactorDiffEffect"] = self.apply_refactor
         self.handlers["ImportSuggestions"] = self.handle_import_suggestions
         self.handlers["PackageInfo"] = self.handle_package_info
+        self.handlers["FalseResponse"] = self.handle_false_response
 
     def handle_incoming_response(self, call_id, payload):
         """Get a registered handler for a given response and execute it."""
@@ -94,6 +97,12 @@ class ProtocolHandler(object):
     def show_type(self, call_id, payload):
         raise NotImplementedError()
 
+    def handle_source_positions(self, call_id, payload):
+        raise NotImplementedError()
+
+    def handle_false_response(self, call_id, payload):
+        raise NotImplementedError()
+
 
 class ProtocolHandlerV1(ProtocolHandler):
     """Implements response handlers for the v1 ENSIME Jerky protocol."""
@@ -106,6 +115,14 @@ class ProtocolHandlerV1(ProtocolHandler):
 
     def handle_debug_vm_error(self, call_id, payload):
         self.editor.raw_message('Error. Check ensime-vim log for details.')
+
+    def handle_false_response(self, call_id, payload):
+        call_options = self.call_options.get(call_id)
+        false_msg = call_options.get('false_resp_msg') if call_options else None
+        if false_msg:
+            self.editor.raw_message(false_msg)
+        else:
+            self.editor.message('false_response')
 
     def handle_import_suggestions(self, call_id, payload):
         imports = list()
@@ -157,7 +174,7 @@ class ProtocolHandlerV1(ProtocolHandler):
                                                     str(sym["name"]),
                                                     "info")
                 qfList.append(item)
-        self.editor.write_quickfix_list(qfList)
+        self.editor.write_quickfix_list(qfList, "Symbol Search")
 
     def handle_symbol_info(self, call_id, payload):
         """Handler for response `SymbolInfo`."""
@@ -247,3 +264,28 @@ class ProtocolHandlerV1(ProtocolHandler):
 
 class ProtocolHandlerV2(ProtocolHandlerV1):
     """Implements response handlers for the v2 ENSIME Jerky protocol."""
+
+    def handle_source_positions(self, call_id, payload):
+        """Handler for source positions"""
+        self.log.debug('handle_source_positions: in %s', Pretty(payload))
+
+        call_options = self.call_options[call_id]
+        word_under_cursor = call_options.get("word_under_cursor")
+
+        positions = payload["positions"]
+
+        if not positions:
+            self.editor.raw_message("No usages of <{}> found".format(word_under_cursor))
+            return
+
+        qf_list = []
+        for p in positions:
+            position = p["position"]
+            preview = str(p["preview"]) if "preview" in p else "<no preview>"
+            item = self.editor.to_quickfix_item(str(position["file"]),
+                                                position["line"],
+                                                preview,
+                                                "info")
+            qf_list.append(item)
+        qf_sorted = sorted(qf_list, key=itemgetter('filename', 'lnum'))
+        self.editor.write_quickfix_list(qf_sorted, "Usages of <{}>".format(word_under_cursor))

@@ -278,9 +278,14 @@ class Editor(object):
                 "text": message,
                 "type": tpe}
 
-    def write_quickfix_list(self, qflist):
-        self._vim.command('call setqflist({!s})'.format(qflist))
-        self._vim.command('copen')
+    def write_quickfix_list(self, qflist, title):
+        if self._isneovim:
+            self._vim.command("call setqflist({!s}, 'r', 'Ensime - {}')".format(qflist, title))
+            self._vim.command('copen')
+        else:
+            self._vim.command("call setqflist({!s}, 'r')".format(qflist))
+            self._vim.command('copen')
+            self._vim.command("let w:quickfix_title='Ensime - {}'".format(title))
 
     def lazy_display_error(self, filename):
         """Display error when user is over it."""

@@ -55,6 +55,10 @@ class NeovimEnsime(Ensime):
     def com_en_type(self, *args, **kwargs):
         super(NeovimEnsime, self).com_en_type(*args, **kwargs)
 
+    @neovim.command('EnUsages', **command_params)
+    def com_en_usages(self, *args, **kwargs):
+        super(NeovimEnsime, self).com_en_usages(*args, **kwargs)
+
     @neovim.command('EnSearch', **command_params)
     def com_en_sym_search(self, *args, **kwargs):
         super(NeovimEnsime, self).com_en_sym_search(*args, **kwargs)

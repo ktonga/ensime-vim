@@ -180,6 +180,10 @@ class Ensime(object):
         client.type(args)
 
     @execute_with_client()
+    def com_en_usages(self, client, args, range=None):
+        client.usages()
+
+    @execute_with_client()
     def com_en_toggle_fulltype(self, client, args, range=None):
         client.toggle_fulltype(None)
 

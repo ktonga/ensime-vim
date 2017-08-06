@@ -59,6 +59,10 @@ function! ensime#com_en_type(args, range) abort
     return s:call_plugin('com_en_type', [a:args, a:range])
 endfunction
 
+function! ensime#com_en_usages(args, range) abort
+    return s:call_plugin('com_en_usages', [a:args, a:range])
+endfunction
+
 function! ensime#com_en_package_inspect(args, range) abort
     return s:call_plugin('com_en_package_inspect', [a:args, a:range])
 endfunction
